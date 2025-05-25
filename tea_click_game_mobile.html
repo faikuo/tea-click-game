@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>茶葉點點樂</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #f5f5dc;
+      background-image: url('ChatGPT Image 2025年5月25日 下午10_35_51.png');
+      background-size: cover;
+      background-position: center;
+      font-family: sans-serif;
+      touch-action: manipulation;
+    }
+    #scoreboard {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.8);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 18px;
+      z-index: 1000;
+    }
+    .leaf {
+      position: absolute;
+      cursor: pointer;
+      transition: transform 0.1s;
+      z-index: 999;
+    }
+    .leaf:active {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+  <div id="scoreboard">分數: <span id="score">0</span>｜剩餘時間: <span id="time">10</span>s</div>
+  <script>
+    const teaImages = [
+      { src: 'ChatGPT_Image_2025年5月25日_下午10_18_07-removebg-preview.png', score: 1 },  // 一般茶葉
+      { src: 'ChatGPT_Image_2025年5月25日_下午10_25_35-removebg-preview.png', score: 3 }   // 一心二葉
+    ];
+
+    let score = 0;
+    let timeLeft = 10;
+    const scoreDisplay = document.getElementById('score');
+    const timeDisplay = document.getElementById('time');
+
+    function spawnLeaf() {
+      const leaf = document.createElement('img');
+      const type = Math.random() < 0.85 ? teaImages[0] : teaImages[1];
+      leaf.src = type.src;
+      leaf.className = 'leaf';
+      leaf.style.width = '12vw'; // 適應手機畫面
+      leaf.style.left = Math.random() * (window.innerWidth - window.innerWidth * 0.15) + 'px';
+      leaf.style.top = Math.random() * (window.innerHeight - window.innerHeight * 0.15) + 'px';
+      leaf.dataset.score = type.score;
+      leaf.onclick = () => {
+        score += Number(leaf.dataset.score);
+        scoreDisplay.textContent = score;
+        leaf.remove();
+      };
+      document.body.appendChild(leaf);
+    }
+
+    const gameInterval = setInterval(spawnLeaf, 500);
+    const timer = setInterval(() => {
+      timeLeft--;
+      timeDisplay.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        clearInterval(gameInterval);
+        alert('時間到！你獲得了 ' + score + ' 分！');
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
