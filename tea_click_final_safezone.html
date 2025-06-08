@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>茶葉點點樂</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      touch-action: manipulation;
+      background: black;
+    }
+    #video-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -1;
+    }
+    #scoreboard {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.8);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 18px;
+      z-index: 1000;
+      text-align: right;
+    }
+    #restart-btn {
+      position: absolute;
+      top: 90px;
+      right: 10px;
+      z-index: 1000;
+      padding: 10px 15px;
+      background-color: #2c7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .leaf {
+      position: absolute;
+      width: 18vw;
+      animation: floatUp 1s ease-out;
+      cursor: pointer;
+      z-index: 999;
+      border: 4px solid yellow;
+      border-radius: 50%;
+      box-shadow: 0 0 15px 5px rgba(255,255,0,0.7);
+    }
+    @keyframes floatUp {
+      from {
+        opacity: 1;
+        transform: translateY(0px) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-30px) scale(1.1);
+      }
+    }
+    #endMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.95);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 20px;
+      z-index: 2000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <video id="video-bg" autoplay playsinline></video>
+  <div id="scoreboard">
+    分數: <span id="score">0</span><br>
+    剩餘時間: <span id="time">10</span>s
+  </div>
+  <button id="restart-btn" onclick="location.reload()">重新開始</button>
+  <div id="endMessage"></div>
+
+  <script>
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+      .then(stream => {
+        document.getElementById('video-bg').srcObject = stream;
+      })
+      .catch(err => {
+        alert("無法啟用相機，請確認瀏覽器權限。");
+      });
+
+    const teaImages = [
+      { src: "leaf1.png", score: 1 },
+      { src: "leaf2.png", score: 3 }
+    ];
+
+    let score = 0;
+    let timeLeft = 10;
+    const scoreDisplay = document.getElementById('score');
+    const timeDisplay = document.getElementById('time');
+    const endMessage = document.getElementById('endMessage');
+
+    function spawnLeaf() {
+      const leaf = document.createElement('img');
+      const type = Math.random() < 0.85 ? teaImages[0] : teaImages[1];
+      leaf.src = type.src;
+      leaf.className = 'leaf';
+
+      const maxWidth = window.innerWidth - window.innerWidth * 0.2;
+      const minTop = 160;  // 所有葉子只能在這高度（重新開始以下）
+      const maxTop = window.innerHeight - 80;
+      leaf.style.left = Math.random() * maxWidth + 'px';
+      leaf.style.top = (Math.random() * (maxTop - minTop) + minTop) + 'px';
+
+      leaf.dataset.score = type.score;
+      leaf.onclick = () => {
+        score += Number(leaf.dataset.score);
+        scoreDisplay.textContent = score;
+        leaf.remove();
+        if (navigator.vibrate) navigator.vibrate(100);
+      };
+      document.body.appendChild(leaf);
+      setTimeout(() => leaf.remove(), 1000);
+    }
+
+    function updateRanking(newScore) {
+      const rank = JSON.parse(localStorage.getItem("teaGameRanks") || "[]");
+      rank.push(newScore);
+      rank.sort((a, b) => b - a);
+      const top3 = rank.slice(0, 3);
+      localStorage.setItem("teaGameRanks", JSON.stringify(top3));
+      return top3;
+    }
+
+    const gameInterval = setInterval(spawnLeaf, 500);
+    const timer = setInterval(() => {
+      timeLeft--;
+      timeDisplay.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        clearInterval(gameInterval);
+
+        const topScores = updateRanking(score);
+        endMessage.style.display = 'block';
+        endMessage.innerHTML = `
+          <strong>時間到！你獲得了 ${score} 分</strong><br><br>
+          🏆 前三名分數：<br>
+          1️⃣ ${topScores[0] || 0} 分<br>
+          2️⃣ ${topScores[1] || 0} 分<br>
+          3️⃣ ${topScores[2] || 0} 分<br><br>
+          <button onclick="location.reload()">再玩一次</button>
+        `;
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
